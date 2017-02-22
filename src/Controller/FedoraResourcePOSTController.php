@@ -95,8 +95,8 @@ class FedoraResourcePOSTController extends ControllerBase {
         $entity->save();
         $id = $entity->id();
 
-        $response['data'] = 'created entity with id' . $id;
-        return new JsonResponse($response);
+        $response['data'] = 'created entity with id ' . $id;
+        return new JsonResponse($response, 201);
     }
 
     /**
