@@ -7,7 +7,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\islandora\RdfBundleSolver\JsonldContextGeneratorInterface;
-use Drupal\rdf\RdfMappingInterface;
 use Drupal\rdf\Entity\RdfMapping;
 
 /**
@@ -66,7 +65,7 @@ class FedoraResourcePOSTController extends ControllerBase {
       return new JsonResponse($response, 400);
     }
 
-    // If bundle specified in X-Islandora-Bundle is not a valid one, return bad request.
+    // If X-Islandora-Bundle is not a valid one, return bad request.
     $bundles = \Drupal::entityManager()->getBundleInfo($entity_type);
     if (!array_key_exists($bundle, $bundles)) {
       $response['data'] = "Bundle not found.";
@@ -76,7 +75,7 @@ class FedoraResourcePOSTController extends ControllerBase {
     // Request Body.
     $body = json_decode($request->getContent(), TRUE);
 
-    // Field -> RDF Mapping, i.e [name] => Array([0] => dc11:title [1] => rdf:label.
+    // Field -> RDFMapping - [name] => Array([0] => dc11:title [1] => rdf:label.
     $arrFieldsWithRDFMapping = $this->getFieldsWithRdfMapping($entity_type, $bundle);
 
     // We need this context info to map the property to the field.
@@ -95,7 +94,7 @@ class FedoraResourcePOSTController extends ControllerBase {
       }
 
       // Expanded triple $property.
-      // i.e "http://purl.org/dc/elements/1.1/title": [{ "@value": "This is a RDF Source" }].
+      // i.e "http://purl.org/dc/elements/1.1/title": [{ "@value": "Example" }].
       // Gets converted into dc11:title.
       $propertyName = substr($property, strrpos($property, '/') + 1);
       $nameSpaceURL = substr($property, 0, strrpos($property, "/"));
