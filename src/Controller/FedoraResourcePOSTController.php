@@ -3,6 +3,8 @@
 namespace Drupal\islandora\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,16 +21,24 @@ class FedoraResourcePOSTController extends ControllerBase {
   const HEADER_CONTENT_TYPE = 'Content-Type';
   const HEADER_BUNDLE = 'X-Islandora-Bundle';
 
-  public $jsonldGenerator;
+  protected $jsonldGenerator;
+  protected $entityManager;
+  protected $entityFieldManager;
 
   /**
    * FedoraResourcePOSTController constructor.
    *
    * @param \Drupal\islandora\RdfBundleSolver\JsonldContextGeneratorInterface $generator
    *   Needed to get bundle's rdf context.
+   * @param \Drupal\Core\Entity\EntityManagerInterface $entityManager
+   *   Needed to do error checking.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
+   *   Needed to get the fields info.
    */
-  public function __construct(JsonldContextGeneratorInterface $generator) {
+  public function __construct(JsonldContextGeneratorInterface $generator, EntityManagerInterface $entityManager, EntityFieldManagerInterface $entityFieldManager) {
     $this->jsonldGenerator = $generator;
+    $this->entityManager = $entityManager;
+    $this->entityFieldManager = $entityFieldManager;
   }
 
   /**
@@ -40,7 +50,11 @@ class FedoraResourcePOSTController extends ControllerBase {
    * @return static
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('islandora.jsonldcontextgenerator'));
+    return new static(
+      $container->get('islandora.jsonldcontextgenerator'),
+      $container->get('entity.manager'),
+      $container->get('entity_field.manager')
+    );
   }
 
   /**
@@ -66,7 +80,7 @@ class FedoraResourcePOSTController extends ControllerBase {
     }
 
     // If X-Islandora-Bundle is not a valid one, return bad request.
-    $bundles = \Drupal::entityManager()->getBundleInfo($entity_type);
+    $bundles = $this->entityManager->getBundleInfo($entity_type);
     if (!array_key_exists($bundle, $bundles)) {
       $response['data'] = "Bundle not found.";
       return new JsonResponse($response, 400);
@@ -101,9 +115,9 @@ class FedoraResourcePOSTController extends ControllerBase {
       $nsPrefix = array_search($nameSpaceURL . "/", $arrNameSpaces);
       $prefixAndProp = $nsPrefix . ":" . $propertyName;
 
-      $fileName = $this->getFieldName($arrFieldsWithRDFMapping, $prefixAndProp);
+      $fieldName = $this->getFieldName($arrFieldsWithRDFMapping, $prefixAndProp);
       $value = $fieldValue[0]["@value"];
-      $entity->$fileName = $value;
+      $entity->$fieldName = $value;
     }
 
     $entity->save();
@@ -151,8 +165,7 @@ class FedoraResourcePOSTController extends ControllerBase {
    */
   private function getFieldsWithRdfMapping($entity_type, $bundle) {
     // Get Fields.
-    $entityManager = \Drupal::service('entity_field.manager');
-    $fields = $entityManager->getFieldDefinitions($entity_type, $bundle);
+    $fields = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle);
 
     // Get RDF Mapping.
     $rdfMapping = RdfMapping::load($entity_type . "." . $bundle);
