@@ -86,9 +86,38 @@ class FedoraResourcePOSTController extends ControllerBase {
       return new JsonResponse($response, 400);
     }
 
-    // Request Body.
-    $body = json_decode($request->getContent(), TRUE);
+    try {
+      // Request Body.
+      $content = json_decode($request->getContent(), TRUE);
+      $newResourceID = $this->createEntity($entity_type, $bundle, $content);
+      $responseData = 'created entity with id ' . $newResourceID;
+      $responseStatus = 201;
 
+    }
+    catch (Exception $e) {
+      watchdog('islandora', $e->getMessage(), array(), WATCHDOG_ERROR);
+      $responseData = "Failed to create entity.";
+      $responseStatus = 500;
+    }
+
+    $response['data'] = $responseData;
+    return new JsonResponse($response, $responseStatus);
+  }
+
+  /**
+   * Business Logic to create an entity from POST request.
+   *
+   * @param string $entity_type
+   *   Fedora_resource.
+   * @param string $bundle
+   *   Type of bundle to be created, i.e image, collection.
+   * @param object $content
+   *   The request body.
+   *
+   * @return string
+   *   Id of the entity that was created.
+   */
+  private function createEntity($entity_type, $bundle, $content) {
     // Field -> RDFMapping - [name] => Array([0] => dc11:title [1] => rdf:label.
     $arrFieldsWithRDFMapping = $this->getFieldsWithRdfMapping($entity_type, $bundle);
 
@@ -101,7 +130,7 @@ class FedoraResourcePOSTController extends ControllerBase {
     $entity = entity_create($entity_type, array('type' => $bundle));
 
     // Loop through all properties.
-    foreach ($body as $property => $fieldValue) {
+    foreach ($content as $property => $fieldValue) {
       // This gets auto created!
       if ($property === "@type") {
         continue;
@@ -116,15 +145,15 @@ class FedoraResourcePOSTController extends ControllerBase {
       $prefixAndProp = $nsPrefix . ":" . $propertyName;
 
       $fieldName = $this->getFieldName($arrFieldsWithRDFMapping, $prefixAndProp);
-      $value = $fieldValue[0]["@value"];
-      $entity->$fieldName = $value;
+      if ($fieldName) {
+        $value = $fieldValue[0]["@value"];
+        $entity->$fieldName = $value;
+      }
     }
 
     $entity->save();
     $id = $entity->id();
-
-    $response['data'] = 'created entity with id ' . $id;
-    return new JsonResponse($response, 201);
+    return $id;
   }
 
   /**
@@ -164,13 +193,18 @@ class FedoraResourcePOSTController extends ControllerBase {
    *   Field to RDF Mapping.
    */
   private function getFieldsWithRdfMapping($entity_type, $bundle) {
+    $arrFieldsWithRDFMapping = array();
+
     // Get Fields.
     $fields = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle);
 
     // Get RDF Mapping.
     $rdfMapping = RdfMapping::load($entity_type . "." . $bundle);
 
-    $arrFieldsWithRDFMapping = array();
+    if (!$rdfMapping) {
+      throw new Exception("RDFMapping Not Found");
+    }
+
     foreach ($fields as $field_name => $field_definition) {
       $arrFieldMapping = $rdfMapping->getFieldMapping($field_name);
       if (isset($arrFieldMapping['properties']) && count($arrFieldMapping["properties"]) > 0) {
