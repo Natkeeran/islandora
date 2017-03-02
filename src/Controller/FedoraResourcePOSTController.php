@@ -45,7 +45,7 @@ class FedoraResourcePOSTController extends ControllerBase {
    * Create required static object.
    *
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-   *    Have to review this method!.
+   *   Have to review this method!.
    *
    * @return static
    */
@@ -61,10 +61,10 @@ class FedoraResourcePOSTController extends ControllerBase {
    * Main method to handle the post request.
    *
    * @param \Symfony\Component\HttpFoundation\Request $request
-   *    HTTP Rquest.
+   *   HTTP Rquest.
    *
    * @return \Symfony\Component\HttpFoundation\Response
-   *    HTTP Response.
+   *   HTTP Response.
    */
   public function processPost(Request $request) {
 
@@ -160,12 +160,12 @@ class FedoraResourcePOSTController extends ControllerBase {
    * Gets the context of the bundle.
    *
    * @param string $entity_type
-   *    Entity type's name.
+   *   Entity type's name.
    * @param string $bundle
-   *    Bundle's name.
+   *   Bundle's name.
    *
    * @return array
-   *      An array of context urls indexed by prefix
+   *   An array of context urls indexed by prefix
    */
   private function getBundleContext($entity_type, $bundle) {
     $bundleContext = $this->jsonldGenerator->getContext($entity_type . "." . $bundle);
@@ -185,9 +185,9 @@ class FedoraResourcePOSTController extends ControllerBase {
    * Returns the RDF Mapping of the fields, if RDF Mapping is available.
    *
    * @param string $entity_type
-   *    Entity Type's name.
+   *   Entity Type's name.
    * @param string $bundle
-   *    Bundle's name.
+   *   Bundle's name.
    *
    * @return array
    *   Field to RDF Mapping.
