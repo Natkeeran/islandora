@@ -73,20 +73,20 @@ class FedoraResourceAddController extends ControllerBase {
       return $this->addForm($type, $request);
     }
     if (count($types) === 0) {
-      return array(
+      return [
         '#markup' => $this->t('You have not created any %bundle types yet. @link to add a new type.', [
           '%bundle' => 'Fedora resource',
           '@link' => $this->l($this->t('Go to the type creation page'), Url::fromRoute('entity.fedora_resource_type.add_form')),
         ]),
-      );
+      ];
     }
-    return array('#theme' => 'fedora_resource_content_add_list', '#content' => $types);
+    return ['#theme' => 'fedora_resource_content_add_list', '#content' => $types];
   }
 
   /**
    * Presents the creation form for fedora_resource entities of given type.
    *
-   * @param EntityInterface $fedora_resource_type
+   * @param \Drupal\Core\Entity\EntityInterface $fedora_resource_type
    *   The custom bundle to add.
    * @param \Symfony\Component\HttpFoundation\Request $request
    *   The current request object.
@@ -95,16 +95,16 @@ class FedoraResourceAddController extends ControllerBase {
    *   A form array as expected by drupal_render().
    */
   public function addForm(EntityInterface $fedora_resource_type, Request $request) {
-    $entity = $this->storage->create(array(
+    $entity = $this->storage->create([
       'type' => $fedora_resource_type->id(),
-    ));
+    ]);
     return $this->entityFormBuilder()->getForm($entity);
   }
 
   /**
    * Provides the page title for this controller.
    *
-   * @param EntityInterface $fedora_resource_type
+   * @param \Drupal\Core\Entity\EntityInterface $fedora_resource_type
    *   The custom bundle/type being added.
    *
    * @return string
@@ -112,7 +112,7 @@ class FedoraResourceAddController extends ControllerBase {
    */
   public function getAddFormTitle(EntityInterface $fedora_resource_type) {
     return t('Create of bundle @label',
-    array('@label' => $fedora_resource_type->label())
+    ['@label' => $fedora_resource_type->label()]
     );
   }
 

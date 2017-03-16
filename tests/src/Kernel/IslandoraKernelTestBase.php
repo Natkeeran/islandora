@@ -30,6 +30,8 @@ abstract class IslandoraKernelTestBase extends KernelTestBase {
     'rules',
     'jsonld',
     'views',
+    'key',
+    'jwt',
     'islandora',
   ];
 
@@ -43,6 +45,7 @@ abstract class IslandoraKernelTestBase extends KernelTestBase {
     $this->installSchema('system', 'sequences');
     $this->installEntitySchema('user');
     $this->installConfig('filter');
+    $this->installSchema('islandora', 'islandora_version_count');
     $this->installEntitySchema('fedora_resource');
   }
 
