@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\islandora\RdfBundleSolver\JsonldContextGeneratorInterface;
 use Drupal\rdf\Entity\RdfMapping;
+use \ML\JsonLD\JsonLD;
 
 /**
  * Class FedoraResourcePOSTController.
@@ -120,11 +121,13 @@ class FedoraResourcePOSTController extends ControllerBase {
   private function createEntity($entity_type, $bundle, $content) {
     // Field -> RDFMapping - [name] => Array([0] => dc11:title [1] => rdf:label.
     $arrFieldsWithRDFMapping = $this->getFieldsWithRdfMapping($entity_type, $bundle);
+    // Sort the fields by rdf mapping and get fieldNames for comparison.
+    asort($arrFieldsWithRDFMapping);
+    $fieldNames = array_keys($arrFieldsWithRDFMapping);
 
-    // We need this context info to map the property to the field.
-    // arrFieldsWithRDFMapping does not have context?!, it only has prefix!.
-    // [dc11] => http://purl.org/dc/elements/1.1/.
-    $arrNameSpaces = $this->getBundleContext($entity_type, $bundle);
+    // Get the expanded JsonLD of the Entity.
+    $arrEntityExpandedJsonLD = $this->getEntityExpandedJsonLD($entity_type, $bundle, $arrFieldsWithRDFMapping);
+    $arrEntityExpandedJsonLD = json_decode(JsonLD::toString($arrEntityExpandedJsonLD[0], true), True);
 
     // Create Entity.
     $entity = entity_create($entity_type, array('type' => $bundle));
@@ -136,15 +139,9 @@ class FedoraResourcePOSTController extends ControllerBase {
         continue;
       }
 
-      // Expanded triple $property.
-      // i.e "http://purl.org/dc/elements/1.1/title": [{ "@value": "Example" }].
-      // Gets converted into dc11:title.
-      $propertyName = substr($property, strrpos($property, '/') + 1);
-      $nameSpaceURL = substr($property, 0, strrpos($property, "/"));
-      $nsPrefix = array_search($nameSpaceURL . "/", $arrNameSpaces);
-      $prefixAndProp = $nsPrefix . ":" . $propertyName;
-
-      $fieldName = $this->getFieldName($arrFieldsWithRDFMapping, $prefixAndProp);
+      // Match the request RDF property with the Entity mapped property.
+      $fieldKey = array_search($property, array_keys($arrEntityExpandedJsonLD));
+      $fieldName = $fieldNames[$fieldKey];
       if ($fieldName) {
         $value = $fieldValue[0]["@value"];
         $entity->$fieldName = $value;
@@ -157,28 +154,48 @@ class FedoraResourcePOSTController extends ControllerBase {
   }
 
   /**
-   * Gets the context of the bundle.
+   *
+   *  Get Expanded JsonLD of the Entity.
    *
    * @param string $entity_type
    *   Entity type's name.
    * @param string $bundle
    *   Bundle's name.
+   * @param array $arrFieldsWithRDFMapping
+   *   Field name and rdf mapping array.
+   *
+   * @return mixed
+   *   Expanded JsonLD of the Entity.
+   */
+  private function getEntityExpandedJsonLD($entity_type, $bundle, $arrFieldsWithRDFMapping){
+    // Get Context
+    $bundleContext = $this->jsonldGenerator->getContext($entity_type . "." . $bundle);
+    $contextInfo = json_decode($bundleContext);
+
+    // Apply Default Values
+    $arrEntityDocument = $this->applyDefaultValuesToRDFFields($arrFieldsWithRDFMapping);
+
+    $compacted = JsonLD::compact((object)$arrEntityDocument, (object)$contextInfo);
+    $entityExpandedJsonLD = JsonLD::expand($compacted);
+
+    return $entityExpandedJsonLD;
+  }
+
+  /**
+   * For each mapped RDF field, apply a default value.
+   *
+   * @param array $arrFieldsWithRDFMapping
+   *   Field name -> Field mapping array.
    *
    * @return array
-   *   An array of context urls indexed by prefix
+   *   Field Mapping -> Default value array.
    */
-  private function getBundleContext($entity_type, $bundle) {
-    $bundleContext = $this->jsonldGenerator->getContext($entity_type . "." . $bundle);
-    $arrBundleContext = json_decode($bundleContext, TRUE);
-
-    // Get all Namespaces.
-    $arrNameSpaces = array();
-    foreach ($arrBundleContext["@context"] as $k => $v) {
-      if (strpos($k, ':') === FALSE) {
-        $arrNameSpaces[$k] = $v;
-      }
+  private function applyDefaultValuesToRDFFields($arrFieldsWithRDFMapping){
+    $arrEntityDocument = array();
+    foreach ($arrFieldsWithRDFMapping as $k => $v) {
+      $arrEntityDocument[$v] = '';
     }
-    return $arrNameSpaces;
+    return $arrEntityDocument;
   }
 
   /**
@@ -208,34 +225,11 @@ class FedoraResourcePOSTController extends ControllerBase {
     foreach ($fields as $field_name => $field_definition) {
       $arrFieldMapping = $rdfMapping->getFieldMapping($field_name);
       if (isset($arrFieldMapping['properties']) && count($arrFieldMapping["properties"]) > 0) {
-        $arrFieldsWithRDFMapping[$field_name] = $arrFieldMapping["properties"];
+        $arrFieldsWithRDFMapping[$field_name] = $arrFieldMapping["properties"][0];
       }
     }
 
     return $arrFieldsWithRDFMapping;
-  }
-
-  /**
-   * Loop through all rdf field mappings and return the field name.
-   *
-   * @param array $arrFieldsWithRDFMapping
-   *   An array fieldName -> prefix:Property mapping.
-   * @param string $rdfProperty
-   *   Property (prefix:Property).
-   *
-   * @return string
-   *   Fieldname of the triple
-   */
-  private function getFieldName(array $arrFieldsWithRDFMapping, $rdfProperty) {
-    $fieldName = FALSE;
-    foreach ($arrFieldsWithRDFMapping as $k => $v) {
-      $found = array_search($rdfProperty, $v);
-      if ($found !== FALSE) {
-        $fieldName = $k;
-        break;
-      }
-    }
-    return $fieldName;
   }
 
 }
