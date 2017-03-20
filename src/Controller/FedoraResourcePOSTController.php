@@ -126,8 +126,8 @@ class FedoraResourcePOSTController extends ControllerBase {
     $fieldNames = array_keys($arrFieldsWithRDFMapping);
 
     // Get the expanded JsonLD of the Entity.
-    $arrEntityExpandedJsonLD = $this->getEntityExpandedJsonLD($entity_type, $bundle, $arrFieldsWithRDFMapping);
-    $arrEntityExpandedJsonLD = json_decode(JsonLD::toString($arrEntityExpandedJsonLD[0], true), True);
+    $arrEntityExpandedJsonLD = $this->getEntityExpandedJsonLd($entity_type, $bundle, $arrFieldsWithRDFMapping);
+    $arrEntityExpandedJsonLD = json_decode(JsonLD::toString($arrEntityExpandedJsonLD[0], TRUE), TRUE);
 
     // Create Entity.
     $entity = entity_create($entity_type, array('type' => $bundle));
@@ -154,8 +154,7 @@ class FedoraResourcePOSTController extends ControllerBase {
   }
 
   /**
-   *
-   *  Get Expanded JsonLD of the Entity.
+   * Get Expanded JsonLD of the Entity.
    *
    * @param string $entity_type
    *   Entity type's name.
@@ -164,18 +163,18 @@ class FedoraResourcePOSTController extends ControllerBase {
    * @param array $arrFieldsWithRDFMapping
    *   Field name and rdf mapping array.
    *
-   * @return mixed
+   * @return array
    *   Expanded JsonLD of the Entity.
    */
-  private function getEntityExpandedJsonLD($entity_type, $bundle, $arrFieldsWithRDFMapping){
-    // Get Context
+  private function getEntityExpandedJsonLd($entity_type, $bundle, array $arrFieldsWithRDFMapping) {
+    // Get Context.
     $bundleContext = $this->jsonldGenerator->getContext($entity_type . "." . $bundle);
     $contextInfo = json_decode($bundleContext);
 
-    // Apply Default Values
-    $arrEntityDocument = $this->applyDefaultValuesToRDFFields($arrFieldsWithRDFMapping);
+    // Apply Default Values.
+    $arrEntityDocument = $this->applyDefaultValuesToRdfFields($arrFieldsWithRDFMapping);
 
-    $compacted = JsonLD::compact((object)$arrEntityDocument, (object)$contextInfo);
+    $compacted = JsonLD::compact((object) $arrEntityDocument, (object) $contextInfo);
     $entityExpandedJsonLD = JsonLD::expand($compacted);
 
     return $entityExpandedJsonLD;
@@ -190,7 +189,7 @@ class FedoraResourcePOSTController extends ControllerBase {
    * @return array
    *   Field Mapping -> Default value array.
    */
-  private function applyDefaultValuesToRDFFields($arrFieldsWithRDFMapping){
+  private function applyDefaultValuesToRdfFields(array $arrFieldsWithRDFMapping) {
     $arrEntityDocument = array();
     foreach ($arrFieldsWithRDFMapping as $k => $v) {
       $arrEntityDocument[$v] = '';
