@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Drupal\islandora\RdfBundleSolver\JsonldContextGeneratorInterface;
 use Drupal\rdf\Entity\RdfMapping;
-use \ML\JsonLD\JsonLD;
+use ML\JsonLD\JsonLD;
 
 /**
  * Class FedoraResourcePOSTController.
@@ -104,7 +104,9 @@ class FedoraResourcePOSTController extends ControllerBase {
 
     }
     catch (Exception $e) {
-      watchdog('islandora', $e->getMessage(), array(), WATCHDOG_ERROR);
+      \Drupal::logger('islandora')->error(
+        'Failed to create entity: @msg', ['@msg' => $e->getMessage()]
+      );
       $responseData = "Failed to create entity.";
       $responseStatus = 500;
     }
@@ -147,7 +149,7 @@ class FedoraResourcePOSTController extends ControllerBase {
     $arrEntityExpandedJsonLD = json_decode(JsonLD::toString($arrEntityExpandedJsonLD[0], TRUE), TRUE);
 
     // Create Entity.
-    $entity = entity_create($entity_type, array('type' => $bundle));
+    $entity = entity_create($entity_type, ['type' => $bundle]);
 
     // Loop through all properties.
     foreach ($content as $property => $fieldValue) {
@@ -190,7 +192,7 @@ class FedoraResourcePOSTController extends ControllerBase {
     $contextInfo = json_decode($bundleContext);
 
     // Put fields into a document.
-    $arrEntityDocument = array();
+    $arrEntityDocument = [];
     foreach ($arrFieldsWithRDFMapping as $k => $v) {
       $arrEntityDocument[$v] = '';
     }
@@ -213,7 +215,7 @@ class FedoraResourcePOSTController extends ControllerBase {
    *   Field to RDF Mapping.
    */
   private function getFieldsWithRdfMapping($entity_type, $bundle) {
-    $arrFieldsWithRDFMapping = array();
+    $arrFieldsWithRDFMapping = [];
 
     // Get Fields.
     $fields = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle);
