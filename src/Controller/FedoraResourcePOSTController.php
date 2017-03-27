@@ -87,12 +87,20 @@ class FedoraResourcePOSTController extends ControllerBase {
       return new JsonResponse($response, 400);
     }
 
+    $newResourceID = "";
     try {
       // Request Body.
       $content = json_decode($request->getContent(), TRUE);
       $newResourceID = $this->createEntity($entity_type, $bundle, $content);
-      $responseData = 'created entity with id ' . $newResourceID;
-      $responseStatus = 201;
+
+      if ($newResourceID != '') {
+        $responseData = 'Created entity with url ' . $newResourceID;
+        $responseStatus = 201;
+      }
+      else {
+        $responseData = 'RDF Mapping not set.';
+        $responseStatus = 500;
+      }
 
     }
     catch (Exception $e) {
@@ -101,8 +109,12 @@ class FedoraResourcePOSTController extends ControllerBase {
       $responseStatus = 500;
     }
 
-    $response['data'] = $responseData;
-    return new JsonResponse($response, $responseStatus);
+    $responseInfo['data'] = $responseData;
+    $response = new JsonResponse($responseInfo, $responseStatus);
+    $response->headers->set('Content-Type', 'application/json');
+    $response->headers->set('location', $newResourceID);
+
+    return $response;
   }
 
   /**
@@ -121,6 +133,11 @@ class FedoraResourcePOSTController extends ControllerBase {
   private function createEntity($entity_type, $bundle, $content) {
     // Field -> RDFMapping - [name] => Array([0] => dc11:title [1] => rdf:label.
     $arrFieldsWithRDFMapping = $this->getFieldsWithRdfMapping($entity_type, $bundle);
+
+    if (count($arrFieldsWithRDFMapping) == 0) {
+      return '';
+    }
+
     // Sort the fields by rdf mapping and get fieldNames for comparison.
     asort($arrFieldsWithRDFMapping);
     $fieldNames = array_keys($arrFieldsWithRDFMapping);
@@ -149,8 +166,9 @@ class FedoraResourcePOSTController extends ControllerBase {
     }
 
     $entity->save();
-    $id = $entity->id();
-    return $id;
+    $url = $entity->toUrl()->setAbsolute()->toString();
+
+    return $url;
   }
 
   /**
@@ -171,30 +189,16 @@ class FedoraResourcePOSTController extends ControllerBase {
     $bundleContext = $this->jsonldGenerator->getContext($entity_type . "." . $bundle);
     $contextInfo = json_decode($bundleContext);
 
-    // Apply Default Values.
-    $arrEntityDocument = $this->applyDefaultValuesToRdfFields($arrFieldsWithRDFMapping);
+    // Put fields into a document.
+    $arrEntityDocument = array();
+    foreach ($arrFieldsWithRDFMapping as $k => $v) {
+      $arrEntityDocument[$v] = '';
+    }
 
     $compacted = JsonLD::compact((object) $arrEntityDocument, (object) $contextInfo);
     $entityExpandedJsonLD = JsonLD::expand($compacted);
 
     return $entityExpandedJsonLD;
-  }
-
-  /**
-   * For each mapped RDF field, apply a default value.
-   *
-   * @param array $arrFieldsWithRDFMapping
-   *   Field name -> Field mapping array.
-   *
-   * @return array
-   *   Field Mapping -> Default value array.
-   */
-  private function applyDefaultValuesToRdfFields(array $arrFieldsWithRDFMapping) {
-    $arrEntityDocument = array();
-    foreach ($arrFieldsWithRDFMapping as $k => $v) {
-      $arrEntityDocument[$v] = '';
-    }
-    return $arrEntityDocument;
   }
 
   /**
@@ -216,9 +220,8 @@ class FedoraResourcePOSTController extends ControllerBase {
 
     // Get RDF Mapping.
     $rdfMapping = RdfMapping::load($entity_type . "." . $bundle);
-
     if (!$rdfMapping) {
-      throw new Exception("RDFMapping Not Found");
+      return $arrFieldsWithRDFMapping;
     }
 
     foreach ($fields as $field_name => $field_definition) {
