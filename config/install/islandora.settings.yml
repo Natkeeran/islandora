@@ -3,3 +3,17 @@ fedora_rest_endpoint: 'http://localhost:8080/fcrepo/rest'
 _core:
   default_config_hash: nDZDR2rrpXXQ-D_7BYrdDFAXYOsB5hgH6vCAMV5I3w8
 broadcast_queue: islandora-connector-broadcast
+
+rdf_namespaces: >
+  ldp  => http://www.w3.org/ns/ldp#,
+  dc11 => http://purl.org/dc/elements/1.1/,
+  nfo => http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/v1.1/,
+  ebucore => http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#,
+  fedora => http://fedora.info/definitions/v4/repository#,
+  owl => http://www.w3.org/2002/07/owl#,
+  ore => http://www.openarchives.org/ore/terms/,
+  rdf => http://www.w3.org/1999/02/22-rdf-syntax-ns#,
+  islandora => http://islandora.ca/CLAW/,
+  pcdm => http://pcdm.org/models#,
+  use => http://pcdm.org/use#,
+  iana => http://www.iana.org/assignments/relation/,

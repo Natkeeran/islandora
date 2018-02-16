@@ -15,6 +15,7 @@ class IslandoraSettingsForm extends ConfigFormBase {
 
   const CONFIG_NAME = 'islandora.settings';
   const BROKER_URL = 'broker_url';
+  const RDF_NAMESPACES = 'rdf_namespaces';
 
   /**
    * {@inheritdoc}
@@ -42,6 +43,12 @@ class IslandoraSettingsForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Broker URL'),
       '#default_value' => $config->get(self::BROKER_URL),
+    ];
+
+    $form[self::RDF_NAMESPACES] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('RDF Namespaces'),
+      '#default_value' => $config->get(self::RDF_NAMESPACES),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -84,6 +91,7 @@ class IslandoraSettingsForm extends ConfigFormBase {
 
     $config
       ->set(self::BROKER_URL, $form_state->getValue(self::BROKER_URL))
+      ->set(self::RDF_NAMESPACES, $form_state->getValue(self::RDF_NAMESPACES))
       ->save();
 
     parent::submitForm($form, $form_state);

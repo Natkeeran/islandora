@@ -66,23 +66,18 @@ function islandora_modules_installed($modules) {
  * Implements hook_rdf_namespaces().
  */
 function islandora_rdf_namespaces() {
-  // Yes, it's amazing, rdf is not registered by default!
-  return [
-    'ldp'  => 'http://www.w3.org/ns/ldp#',
-    'dc11' => 'http://purl.org/dc/elements/1.1/',
-    'nfo' => 'http://www.semanticdesktop.org/ontologies/2007/03/22/nfo/v1.1/',
-    'ebucore' => 'http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#',
-    'fedora' => 'http://fedora.info/definitions/v4/repository#',
-    'owl' => 'http://www.w3.org/2002/07/owl#',
-    'ore' => 'http://www.openarchives.org/ore/terms/',
-    'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-    'islandora' => 'http://islandora.ca/CLAW/',
-    'pcdm' => 'http://pcdm.org/models#',
-    'use' => 'http://pcdm.org/use#',
-    'iana' => 'http://www.iana.org/assignments/relation/',
-  ];
-}
+  $config = \Drupal::config('islandora.settings');
+  $rdf_namespaces = $config->get('rdf_namespaces');
 
+  $entries = explode(',', $rdf_namespaces);
+  $prefix_namespace_list = array();
+  foreach ($entries as $item) {
+    $prefix_namespace = explode("=>",$item);
+    $prefix_namespace_list[trim($prefix_namespace[0])] = trim($prefix_namespace[1]);
+  }
+
+  return $prefix_namespace_list;
+}
 /**
  * Implements hook_entity_insert().
  */
