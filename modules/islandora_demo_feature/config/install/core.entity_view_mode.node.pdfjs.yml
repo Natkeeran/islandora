@@ -1,0 +1,12 @@
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - islandora_demo_feature
+  module:
+    - node
+id: node.pdfjs
+label: PDFjs
+targetEntityType: node
+cache: true
