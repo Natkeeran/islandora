@@ -10,10 +10,11 @@ dependencies:
     - field.field.media.file.field_mime_type
     - field.field.media.file.field_tags
     - media.type.file
+  enforced:
+    module:
+      - islandora_demo_feature
   module:
     - pdf
-_core:
-  default_config_hash: AMKkFLFhBjk2r0nXS-ecj9o82Wvi6NsYiG8fXbAgGi4
 id: media.file.pdfjs
 targetEntityType: media
 bundle: file
