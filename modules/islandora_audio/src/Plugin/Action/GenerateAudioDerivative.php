@@ -25,6 +25,7 @@ class GenerateAudioDerivative extends AbstractGenerateDerivative {
     $config['mimetype'] = 'audio/mpeg';
     $config['queue'] = 'islandora-connector-homarus';
     $config['destination_media_type'] = 'audio';
+    $config['args'] = '-codec:a libmp3lame -q:a 5';
     return $config;
   }
 

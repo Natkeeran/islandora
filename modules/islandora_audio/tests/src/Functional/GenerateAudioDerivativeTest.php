@@ -34,7 +34,7 @@ class GenerateAudioDerivativeTest extends GenerateDerivativeTestBase {
     ]);
     $this->drupalLogin($account);
 
-    // Create an action to generate a jpeg thumbnail.
+    // Create an action to generate a audio derivative.
     $this->drupalGet('admin/config/system/actions');
     $this->getSession()->getPage()->findById("edit-action")->selectOption("Generate a audio derivative");
     $this->getSession()->getPage()->pressButton(t('Create'));
