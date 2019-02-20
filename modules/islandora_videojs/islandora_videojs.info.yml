@@ -1,0 +1,7 @@
+name: 'Islandora Videojs'
+description: 'Islandora Videojs overrides'
+type: module
+package: Islandora
+core: 8.x
+dependencies:
+  - islandora

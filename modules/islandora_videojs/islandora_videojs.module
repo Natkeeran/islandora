@@ -1,0 +1,56 @@
+<?php
+
+/**
+ * @file
+ * Contains islandora_videojs.module.
+ *
+ * This file is part of the Islandora Project.
+ *
+ * (c) Islandora Foundation
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function islandora_videojs_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the islandora module.
+    case 'help.page.islandora_videojs':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Islandora Videojs overrides.') . '</p>';
+      $output .= '<p>' . t('Customizes videojs.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+
+function islandora_videojs_theme_registry_alter(&$theme_registry) {
+  $module_path = drupal_get_path('module', 'islandora_videojs');
+
+  // Use the templates in my module's template folder.
+  $theme_registry['videojs'] = $theme_registry['videojs'];
+  $theme_registry['videojs']['path'] = $module_path . '/templates';
+  $theme_registry['videojs']['template'] = 'videojs';
+}
+
+
+function islandora_videojs_theme($existing, $type, $theme, $path) {
+  return array(
+    'videojs' => array(
+      'variables' => array('items' => NULL, 'player_attributes' => NULL, 'testvar' => 'testvalue'),
+      'base hook' => 'videojs'
+    ),
+  );
+}
+
+
+
+
